@@ -1,0 +1,33 @@
+{
+  "version": "v1",
+  "faces": 320,
+  "withers_cm": 30.0,
+  "size_cm": [
+    49.1,
+    14.4,
+    45.9
+  ],
+  "pieces": 34,
+  "cuts": 194,
+  "pages": 10,
+  "tab_mm": 7.0,
+  "material": {
+    "ru": "бумага 160 г/м² или 80 г/м² на тонком картоне",
+    "en": "160 g/m² card, or 80 g/m² paper on thin cardboard"
+  },
+  "belly_seam": [
+    67,
+    68,
+    79,
+    56,
+    40,
+    41
+  ],
+  "params": {
+    "height": 30.0,
+    "total_height": null,
+    "faces": 320,
+    "max_edge": null,
+    "tab": 7.0
+  }
+}

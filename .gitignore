@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+.serena/
+# your own builds; released patterns live in patterns/
+out/

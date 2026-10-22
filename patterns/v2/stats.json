@@ -1,0 +1,35 @@
+{
+  "version": "v2",
+  "faces": 444,
+  "withers_cm": 52.2,
+  "size_cm": [
+    85.4,
+    25.1,
+    79.8
+  ],
+  "pieces": 66,
+  "cuts": 284,
+  "pages": 29,
+  "tab_mm": 10.0,
+  "material": {
+    "ru": "бумага 80–160 г/м², наклеенная на картон",
+    "en": "80–160 g/m² paper glued onto cardboard"
+  },
+  "belly_seam": [
+    112,
+    113,
+    107,
+    106,
+    61,
+    134,
+    51,
+    52
+  ],
+  "params": {
+    "height": null,
+    "total_height": 80.0,
+    "faces": 400,
+    "max_edge": 150.0,
+    "tab": 10.0
+  }
+}

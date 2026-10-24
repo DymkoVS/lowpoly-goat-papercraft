@@ -7,11 +7,14 @@
 
 **[English version → README.md](README.md)**
 
-![Собранная большая коза (v2), 80 см по рогам](docs/img/goat_left.jpg)
+![Собранная большая коза (v2) вращается](docs/img/goat_spin.gif)
 
-![Та же коза с пяти сторон](docs/img/gallery.jpg)
+*Большая коза (v2) в сборке: обычная офисная бумага 80 г/м², наклеенная на картон; морда вырезана из красной бумаги. Видео для соцсетей: [goat_spin.mp4](docs/media/goat_spin.mp4).*
 
-*Большая коза (v2) в сборке: обычная офисная бумага 80 г/м², наклеенная на картон; морда вырезана из красной бумаги.*
+Нажмите на фото, чтобы открыть в полном размере:
+
+| [![слева](docs/img/goat_left.jpg)](docs/img/goat_left.jpg) | [![спереди справа](docs/img/goat_front_right.jpg)](docs/img/goat_front_right.jpg) | [![спереди](docs/img/goat_front.jpg)](docs/img/goat_front.jpg) | [![справа сзади](docs/img/goat_right_rear.jpg)](docs/img/goat_right_rear.jpg) | [![сзади](docs/img/goat_rear.jpg)](docs/img/goat_rear.jpg) |
+|---|---|---|---|---|
 
 ## Скачать выкройку
 

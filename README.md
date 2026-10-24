@@ -7,11 +7,14 @@ Two sizes on A4 sheets, plus an open-source generator to make your own size.
 
 **[Русская версия → README.ru.md](README.ru.md)**
 
-![Assembled large goat (v2), 80 cm to the horn tips](docs/img/goat_left.jpg)
+![Assembled large goat (v2) turning around](docs/img/goat_spin.gif)
 
-![The same goat from five sides](docs/img/gallery.jpg)
+*The large goat (v2) as built: plain 80 g/m² office paper glued onto cardboard, the muzzle pieces cut from red paper. Video for sharing: [goat_spin.mp4](docs/media/goat_spin.mp4).*
 
-*The large goat (v2) as built: plain 80 g/m² office paper glued onto cardboard, the muzzle pieces cut from red paper.*
+Click a photo to see it full size:
+
+| [![left](docs/img/goat_left.jpg)](docs/img/goat_left.jpg) | [![front right](docs/img/goat_front_right.jpg)](docs/img/goat_front_right.jpg) | [![front](docs/img/goat_front.jpg)](docs/img/goat_front.jpg) | [![right rear](docs/img/goat_right_rear.jpg)](docs/img/goat_right_rear.jpg) | [![rear](docs/img/goat_rear.jpg)](docs/img/goat_rear.jpg) |
+|---|---|---|---|---|
 
 ## Download the pattern
 

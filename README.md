@@ -1,11 +1,17 @@
 # Low-poly Goat Papercraft 🐐
 
 A free, printable **low-poly goat** to cut out and glue from paper and cardboard — just in time for the **Year of the Goat (2027)**.
-Two tested sizes on A4 sheets, plus an open-source generator to make your own size.
+Two sizes on A4 sheets, plus an open-source generator to make your own size.
+
+**Build status:** the large goat (v2) has been built and checked in paper. The small goat (v1) comes from the same generator and passes the same geometric checks, but has not been built yet — your photos and feedback are welcome.
 
 **[Русская версия → README.ru.md](README.ru.md)**
 
-<!-- photos of the assembled goat go here -->
+![Assembled large goat (v2), 80 cm to the horn tips](docs/img/goat_left.jpg)
+
+![The same goat from five sides](docs/img/gallery.jpg)
+
+*The large goat (v2) as built: plain 80 g/m² office paper glued onto cardboard, the muzzle pieces cut from red paper.*
 
 ## Download the pattern
 
@@ -45,8 +51,8 @@ cd lowpoly-goat-papercraft
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt          # Windows: .venv\Scripts\pip ...
 
-.venv/bin/python goat/build.py --preset v1          # rebuild the tested small goat
-.venv/bin/python goat/build.py --preset v2          # rebuild the tested large goat
+.venv/bin/python goat/build.py --preset v1          # rebuild the small goat
+.venv/bin/python goat/build.py --preset v2          # rebuild the large goat (built and checked)
 .venv/bin/python goat/build.py --total-height 60 --faces 400 --max-edge 150 --tab 10 --version my60
 ```
 
@@ -54,7 +60,7 @@ Output goes to `out/<version>/`: PDFs in Russian and English, the assembly map, 
 
 | Option | Meaning |
 |---|---|
-| `--preset v1` / `v2` | tested settings (see table above) |
+| `--preset v1` / `v2` | settings of the published patterns (see table above) |
 | `--height` / `--total-height` | size: height at withers, or to the horn tips, in cm |
 | `--faces` | number of triangles. Fewer = easier to build; below ~280 the horns turn into stubs |
 | `--max-edge` | longest edge on paper, mm. Longer edges are split so pieces fit on A4 (use 150 for goats above ~50 cm) |
@@ -77,7 +83,7 @@ Details (in Russian): [docs/algorithm.ru.md](docs/algorithm.ru.md).
 
 ## Licence
 
-- **Patterns** (PDF, pictures, 3D model in `patterns/`): [CC BY-NC 4.0](LICENSE-PATTERN.txt). Free for personal use, schools and clubs; credit "Low-poly Goat Papercraft by DymkoVS"; no selling.
+- **Patterns** (PDF, pictures, 3D model in `patterns/`, photos in `docs/img/`): [CC BY 4.0](LICENSE-PATTERN.txt). Use, share, adapt — also commercially (workshops, classes, kits) — as long as you credit "Low-poly Goat Papercraft by DymkoVS" with a link to this repository.
 - **Code** (`goat/`): [MIT](LICENSE).
 - **Fonts** (`goat/fonts/`): DejaVu, see [LICENSE_DEJAVU](goat/fonts/LICENSE_DEJAVU).
 

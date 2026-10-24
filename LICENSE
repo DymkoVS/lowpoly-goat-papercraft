@@ -22,5 +22,5 @@ SOFTWARE.
 
 This MIT license covers the source code in goat/ only.
 The patterns (PDF files, pictures and 3D model in patterns/) are licensed under
-CC BY-NC 4.0 — see LICENSE-PATTERN.txt.
+CC BY 4.0 — see LICENSE-PATTERN.txt.
 The DejaVu fonts in goat/fonts/ have their own license — see goat/fonts/LICENSE_DEJAVU.

@@ -5,3 +5,4 @@ __pycache__/
 .serena/
 # your own builds; released patterns live in patterns/
 out/
+_photos/

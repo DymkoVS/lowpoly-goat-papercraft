@@ -1,8 +1,8 @@
 """Low-poly goat papercraft: model -> unfolding -> A4 layout -> checked PDF (RU/EN).
 
 Run from the project root:
-    python goat/build.py --preset v1                 # tested small goat, 30 cm at withers
-    python goat/build.py --preset v2                 # tested large goat, 80 cm to horn tips
+    python goat/build.py --preset v1                 # small goat, 30 cm at withers
+    python goat/build.py --preset v2                 # large goat, 80 cm to horn tips (built and checked)
     python goat/build.py --total-height 60 --faces 400 --max-edge 150 --tab 10 --version my60
 
 A PDF is written only if every geometric check passes (see validate()).
@@ -42,7 +42,7 @@ MATERIAL_BOARD = {
     "en": "80–160 g/m² paper glued onto cardboard",
 }
 
-# проверенные сборкой версии
+# настройки опубликованных выкроек (v2 собрана и проверена)
 PRESETS = {
     "v1": dict(height=30.0, total_height=None, faces=320, max_edge=None, tab=7.0, version="v1",
                material=MATERIAL_CARD),
@@ -207,7 +207,7 @@ def assembly_render(mesh, u, path):
 
 def main():
     ap = argparse.ArgumentParser(description="Low-poly goat papercraft pattern generator")
-    ap.add_argument("--preset", choices=sorted(PRESETS), help="tested version: v1 (30 cm) or v2 (80 cm)")
+    ap.add_argument("--preset", choices=sorted(PRESETS), help="published version: v1 (30 cm) or v2 (80 cm)")
     ap.add_argument("--height", type=float, help="height at withers, cm (default 30)")
     ap.add_argument("--total-height", type=float, help="height to horn tips, cm (instead of --height)")
     ap.add_argument("--faces", type=int, help="number of faces (default 320)")

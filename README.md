@@ -28,6 +28,20 @@ Two sizes on A4 sheets, plus an open-source generator to make your own size.
 
 Each PDF contains an assembly map (the model coloured by piece, with piece numbers), a legend, step-by-step instructions, a parts list and a note on how to close the figure, followed by the pattern sheets at 1:1 scale.
 
+## What you need
+
+<img src="docs/img/tools.jpg" alt="Tools used to build the goat" width="360" align="right">
+
+The tools actually used for the large goat:
+
+- printer (A4), plain 80 g/m² paper, thin cardboard, glue stick to laminate the printouts;
+- cutting mat, metal ruler (30 cm), utility or craft knife, scissors;
+- wooden stick for scoring fold lines;
+- two pairs of tweezers — straight and bent — for tabs in tight places;
+- fast glue: superglue gel or contact cement (PVA is too slow).
+
+<br clear="right">
+
 ## Quick start
 
 1. **Print** on A4 (not Letter) at **100 %** ("Actual size"). Check the 50 mm bar in the sheet header with a ruler.

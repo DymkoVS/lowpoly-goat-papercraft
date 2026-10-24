@@ -5,7 +5,8 @@ A short version of this guide is on pages 2–3 of every PDF.
 ## Materials and tools
 
 - **Paper and board.** Tested: plain 80 g/m² office paper glued onto thin cardboard. The small goat (v1) can also be printed directly on 160 g/m² card. The large goat (v2) needs cardboard.
-- **Knife.** Craft knife or snap-off utility knife, metal ruler, cutting mat.
+- **Knife.** Craft knife or snap-off utility knife, metal ruler, cutting mat. Scissors for rough trimming.
+- **Tweezers** — straight and bent: to press tabs in tight places (horns, hooves, the last centimetres of the belly).
 - **Scoring tool.** Wooden stick, empty ballpoint pen or ball embossing stylus.
 - **Glue.** Fast glue: superglue gel or contact cement. Apply with a toothpick. Keep nail polish remover handy for your fingers.
 

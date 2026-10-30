@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Коза в цвете</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: 3D-сцена во весь экран, справа (на телефоне — снизу) узкая «бирка» с настройками, как на листе выкройки */
+:root {
+  --bg: #e9ebe6;
+  --stage: #f3f4f0;
+  --panel: #ffffff;
+  --fg: #1d211c;
+  --muted: #646b62;
+  --line: #d3d7cf;
+  --accent: #2f6b4f;
+  --f-display: "Unbounded", "Arial Black", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #151815; --stage: #1c201c; --panel: #222722; --fg: #e8ebe5; --muted: #9aa297; --line: #353b34; --accent: #7cc4a0; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #151815; --stage: #1c201c; --panel: #222722; --fg: #e8ebe5; --muted: #9aa297; --line: #353b34; --accent: #7cc4a0; color-scheme: dark }
+
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 14px; overflow: hidden; }
+.app { display: grid; grid-template-columns: 1fr 300px; height: 100%; }
+#stage { position: relative; min-width: 0; min-height: 0; background: var(--stage); }
+#stage canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.hint { position: absolute; left: max(16px, env(safe-area-inset-left, 0px)); bottom: 14px; font: 12px var(--f-mono); color: var(--muted); pointer-events: none; }
+aside { background: var(--panel); border-left: 1px solid var(--line); overflow-y: auto;
+  padding-block: 22px; padding-left: 20px; padding-right: max(20px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 20px; }
+h1 { font: 700 22px/1.1 var(--f-display); margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+.sub { color: var(--muted); margin: 6px 0 0; line-height: 1.45; }
+.group { display: flex; flex-direction: column; gap: 8px; }
+.label { font: 500 11px var(--f-mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.seg { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.seg button { font: 500 13px var(--f-body); padding: 9px 6px; border: 0; background: transparent; color: var(--fg); cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg.three { grid-template-columns: repeat(3, 1fr); }
+.seg button[aria-pressed="true"] { background: var(--fg); color: var(--panel); }
+.row { display: flex; align-items: center; gap: 10px; }
+input[type=range] { flex: 1; accent-color: var(--accent); min-width: 0; }
+.val { font: 500 13px var(--f-mono); min-width: 52px; text-align: right; font-variant-numeric: tabular-nums; }
+.btn { font: 500 14px var(--f-body); padding: 11px 14px; border-radius: 6px; border: 1px solid var(--fg); background: var(--fg); color: var(--panel); cursor: pointer; }
+.btn.ghost { background: transparent; color: var(--fg); border-color: var(--line); }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.check { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.check input { accent-color: var(--accent); width: 16px; height: 16px; }
+dl { display: grid; grid-template-columns: 1fr auto; gap: 7px 12px; margin: 0; font-variant-numeric: tabular-nums; }
+dt { color: var(--muted); }
+dd { margin: 0; font: 500 13px var(--f-mono); text-align: right; }
+.note { color: var(--muted); font-size: 12.5px; line-height: 1.5; margin: 0; border-top: 1px solid var(--line); padding-top: 14px; }
+.legend { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.legend button { width: 100%; display: grid; grid-template-columns: 18px 1fr auto; align-items: center; gap: 10px;
+  padding: 4px 6px; border: 0; border-radius: 4px; background: transparent; color: var(--fg); font: 13px var(--f-body); text-align: left; cursor: pointer; }
+.legend button:hover { background: var(--bg); }
+.legend button[aria-pressed="false"] { color: var(--muted); text-decoration: line-through; }
+.legend button[aria-pressed="false"] i { opacity: .25; }
+.legend i { width: 18px; height: 18px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0,0,0,.2); }
+.legend b { font: 500 12px var(--f-mono); font-variant-numeric: tabular-nums; }
+.tip { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
+
+@media (max-width: 760px) {
+  .app { grid-template-columns: 1fr; grid-template-rows: 58% 42%; }
+  aside { border-left: 0; border-top: 1px solid var(--line); padding-block: 16px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); gap: 16px; }
+  h1 { font-size: 18px; }
+}
+</style>
+<style>html,body{margin:0}</style>
+</head>
+<body>
+
+
+<div class="app">
+  <div id="stage"><span class="hint">тянуть — вращать · колесо/щипок — масштаб</span></div>
+  <aside>
+    <div>
+      <h1>Коза в цвете</h1>
+      <p class="sub">Матовый акрил Decola: грани — красной краской, рёбра — чёрной полосой реальной ширины в миллиметрах.</p>
+    </div>
+
+    <div class="group">
+      <span class="label">Модель</span>
+      <div class="seg" role="group" aria-label="Модель">
+        <button id="m-v2" aria-pressed="true">v2 · 80 см</button>
+        <button id="m-v1" aria-pressed="false">v1 · 46 см</button>
+      </div>
+    </div>
+
+    <div class="group">
+      <label class="label" for="w">Ширина чёрного ребра</label>
+      <div class="row"><input id="w" type="range" min="0" max="5" step="0.5" value="2.5"><span class="val" id="wv">2.5 мм</span></div>
+    </div>
+
+    <div class="group">
+      <span class="label">Цвета граней</span>
+      <div class="seg three" role="group" aria-label="Палитра">
+        <button id="p-red" aria-pressed="true">Вся красная</button>
+        <button id="p-soft" aria-pressed="false">Красные тона</button>
+        <button id="p-bright" aria-pressed="false">Decola, все</button>
+      </div>
+      <label class="label" for="wh">Белил в краске</label>
+      <div class="row"><input id="wh" type="range" min="0" max="50" step="5" value="10"><span class="val" id="whv">10 %</span></div>
+      <button class="btn" id="shuffle">Перемешать цвета</button>
+      <ul class="legend" id="sw"></ul>
+      <p class="tip">Нажмите на краску, чтобы убрать её из раскраски или вернуть. Справа — сколько граней ею красить.</p>
+    </div>
+
+    <div class="group">
+      <label class="check"><input type="checkbox" id="spin" checked> Медленно вращать</label>
+    </div>
+
+    <dl id="stats"></dl>
+
+    <p class="note">Ребро красится полосой по 1,25 мм на каждую из соседних граней (при 2,5 мм). Линии раздела больших треугольников в v2 плоские, их не красят: такие половинки получают один цвет.</p>
+  </aside>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+const DATA = __DATA__;
+
+const stage = document.getElementById('stage');
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+stage.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(32, 1, 1, 2000);
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+
+function themeBg() {
+  const c = getComputedStyle(document.documentElement).getPropertyValue('--stage').trim() || '#f3f4f0';
+  renderer.setClearColor(new THREE.Color(c));
+}
+themeBg();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', themeBg);
+new MutationObserver(themeBg).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+const material = new THREE.ShaderMaterial({
+  side: THREE.DoubleSide,
+  extensions: { derivatives: true },
+  uniforms: { halfW: { value: 0.125 } },
+  vertexShader: `
+    attribute vec3 ed; attribute vec3 col;
+    varying vec3 vEd; varying vec3 vCol; varying vec3 vN; varying vec3 vView;
+    void main() {
+      vEd = ed; vCol = col;
+      vN = normalize(normalMatrix * normal);
+      vec4 mv = modelViewMatrix * vec4(position, 1.0);
+      vView = -mv.xyz;
+      gl_Position = projectionMatrix * mv;
+    }`,
+  fragmentShader: `
+    uniform float halfW;
+    varying vec3 vEd; varying vec3 vCol; varying vec3 vN; varying vec3 vView;
+    void main() {
+      vec3 n = normalize(vN);
+      if (dot(n, vView) < 0.0) n = -n;
+      vec3 L1 = normalize(vec3(0.5, 0.8, 0.6));
+      vec3 L2 = normalize(vec3(-0.6, 0.2, -0.4));
+      // матовая краска: только рассеянный свет, без бликов
+      float lit = 0.5 + 0.42 * max(dot(n, L1), 0.0) + 0.12 * max(dot(n, L2), 0.0);
+      vec3 c = vCol * min(lit, 1.0);
+      float d = min(vEd.x, min(vEd.y, vEd.z));
+      float aa = fwidth(d) * 0.8;
+      float k = halfW <= 0.0 ? 0.0 : 1.0 - smoothstep(halfW - aa, halfW + aa, d);
+      c = mix(c, vec3(0.09, 0.09, 0.085), k);
+      gl_FragColor = vec4(c, 1.0);
+    }`
+});
+
+// ---- геометрия: грани, плоские пары, длина рёбер ----
+function prepare(m) {
+  const P = i => new THREE.Vector3(m.v[3*i], m.v[3*i+2], -m.v[3*i+1]); // Z вверх → Y вверх
+  const nF = m.f.length / 3;
+  const tri = [], normals = [];
+  for (let t = 0; t < nF; t++) {
+    const a = P(m.f[3*t]), b = P(m.f[3*t+1]), c = P(m.f[3*t+2]);
+    tri.push([a, b, c]);
+    normals.push(new THREE.Vector3().subVectors(b, a).cross(new THREE.Vector3().subVectors(c, a)).normalize());
+  }
+  const edges = new Map();
+  const key = (i, j) => i < j ? i + '_' + j : j + '_' + i;
+  for (let t = 0; t < nF; t++) for (let k = 0; k < 3; k++) {
+    const i = m.f[3*t + (k+1)%3], j = m.f[3*t + (k+2)%3]; // ребро напротив вершины k
+    const e = key(i, j);
+    if (!edges.has(e)) edges.set(e, []);
+    edges.get(e).push([t, k]);
+  }
+  // объединяем треугольники, лежащие в одной плоскости (дробление рёбер в v2)
+  const parent = [...Array(nF).keys()];
+  const find = x => parent[x] === x ? x : (parent[x] = find(parent[x]));
+  const flat = new Set();
+  let inkLen = 0, nCrease = 0;
+  for (const [e, arr] of edges) {
+    const [i, j] = e.split('_').map(Number);
+    const len = P(i).distanceTo(P(j));
+    if (arr.length === 2 && Math.abs(normals[arr[0][0]].dot(normals[arr[1][0]])) > 0.99995) {
+      flat.add(e); parent[find(arr[0][0])] = find(arr[1][0]);
+    } else { inkLen += len; nCrease++; }
+  }
+  const panelOf = new Map(); let nPanels = 0;
+  const panel = tri.map((_, t) => { const r = find(t); if (!panelOf.has(r)) panelOf.set(r, nPanels++); return panelOf.get(r); });
+  // соседство панелей — чтобы соседи не получали похожий цвет
+  const adj = [...Array(nPanels)].map(() => new Set());
+  for (const arr of edges.values()) if (arr.length === 2) {
+    const p = panel[arr[0][0]], q = panel[arr[1][0]];
+    if (p !== q) { adj[p].add(q); adj[q].add(p); }
+  }
+
+  const pos = new Float32Array(nF * 9), nor = new Float32Array(nF * 9), ed = new Float32Array(nF * 9);
+  for (let t = 0; t < nF; t++) {
+    const v = tri[t];
+    for (let k = 0; k < 3; k++) {
+      const o = 9*t + 3*k;
+      pos[o] = v[k].x; pos[o+1] = v[k].y; pos[o+2] = v[k].z;
+      nor[o] = normals[t].x; nor[o+1] = normals[t].y; nor[o+2] = normals[t].z;
+    }
+    for (let k = 0; k < 3; k++) { // расстояние до ребра напротив вершины k
+      const i = m.f[3*t + (k+1)%3], j = m.f[3*t + (k+2)%3];
+      const a = v[(k+1)%3], b = v[(k+2)%3];
+      const h = new THREE.Vector3().subVectors(v[k], a).cross(new THREE.Vector3().subVectors(b, a)).length() / a.distanceTo(b);
+      const isFlat = flat.has(key(i, j));
+      for (let q = 0; q < 3; q++) ed[9*t + 3*q + k] = isFlat ? 1e4 : (q === k ? h : 0);
+    }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  g.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
+  g.setAttribute('ed', new THREE.BufferAttribute(ed, 3));
+  g.setAttribute('col', new THREE.BufferAttribute(new Float32Array(nF * 9), 3));
+  g.computeBoundingBox();
+  const bb = g.boundingBox, c = bb.getCenter(new THREE.Vector3());
+  g.translate(-c.x, -bb.min.y, -c.z);
+  g.computeBoundingBox();
+  return { g, panel, nPanels, adj, inkLen, nCrease, nF, size: bb.getSize(new THREE.Vector3()) };
+}
+
+const models = { v1: prepare(DATA.v1), v2: prepare(DATA.v2) };
+let cur = 'v2', palette = 'red', mesh = null, colors = [];
+
+// Акрил Decola (матовый). Оттенки примерные — экран не передаёт банку точно.
+const DECOLA = [
+  ['Белила титановые', '#efede6'], ['Лимонная', '#e8d24f'], ['Жёлтая средняя', '#e2b23f'],
+  ['Охра золотистая', '#c39545'], ['Оранжевая', '#d9773a'], ['Красная светлая', '#cc4a3c'],
+  ['Красная', '#b3342f'], ['Кармин', '#8a2934'], ['Малиновая', '#a3354f'], ['Розовая', '#de9aa0'],
+  ['Сиреневая', '#a08cb2'], ['Фиолетовая', '#5d4578'], ['Ультрамарин', '#33438a'], ['Синяя', '#335f98'],
+  ['Голубая', '#86b3d2'], ['Бирюзовая', '#409a98'], ['Изумрудная', '#24775b'], ['Зелёная светлая', '#8db44f'],
+  ['Зелёная тёмная', '#335a3c'], ['Оливковая', '#7b783d'], ['Сиена жжёная', '#97492e'],
+  ['Умбра жжёная', '#5d3c2c'], ['Серая', '#8b8d88'],
+];
+const REDS = ['Охра золотистая', 'Оранжевая', 'Красная светлая', 'Красная', 'Кармин', 'Малиновая', 'Розовая', 'Сиена жжёная', 'Умбра жжёная'];
+const paints = DECOLA.map(([name, hex]) => ({ name, hex, c: new THREE.Color(hex).convertSRGBToLinear(), on: true }));
+function applyPreset() {
+  paints.forEach(p => p.on =
+    palette === 'red' ? p.name === 'Красная' :
+    palette === 'bright' ? p.name !== 'Белила титановые' && p.name !== 'Серая' : REDS.includes(p.name));
+}
+applyPreset();
+
+function paint() {
+  const M = models[cur];
+  let pool = paints.map((p, i) => i).filter(i => paints[i].on);
+  if (!pool.length) pool = [paints.findIndex(p => p.name === 'Красная')];
+  const count = new Array(paints.length).fill(0);
+  colors = [];
+  // соседние грани — разными красками; среди допустимых берём менее использованные, чтобы краски шли поровну
+  const order = [...Array(M.nPanels).keys()].sort(() => Math.random() - 0.5);
+  for (const p of order) {
+    const near = new Set([...M.adj[p]].map(q => colors[q]).filter(x => x !== undefined));
+    let cand = pool.filter(i => !near.has(i));
+    if (!cand.length) cand = pool;
+    const min = Math.min(...cand.map(i => count[i]));
+    cand = cand.filter(i => count[i] <= min + 1);
+    const pick = cand[Math.floor(Math.random() * cand.length)];
+    colors[p] = pick; count[pick]++;
+  }
+  lastCount = count;
+  recolor();
+}
+
+// Краска + белила: смешение пигментов по Кубелке–Мунку (две константы), по каналам в линейном отражении.
+// WHITE_S — во сколько раз титановые белила рассеивают сильнее цветного пигмента (подобрано на глаз)
+const WHITE = new THREE.Color('#efede6').convertSRGBToLinear(), WHITE_S = 12;
+const ks = R => { R = Math.min(Math.max(R, 0.001), 0.999); return (1 - R) * (1 - R) / (2 * R); };
+const unks = K => 1 + K - Math.sqrt(K * K + 2 * K);
+function tint(c, w) {
+  if (w <= 0) return c.clone();
+  const mix = (a, b) => unks(((1 - w) * ks(a) + w * WHITE_S * ks(b)) / ((1 - w) + w * WHITE_S));
+  return new THREE.Color(mix(c.r, WHITE.r), mix(c.g, WHITE.g), mix(c.b, WHITE.b));
+}
+let lastCount = [];
+function recolor() {
+  const M = models[cur], w = +document.getElementById('wh').value / 100;
+  const mixed = paints.map(p => tint(p.c, w));
+  const col = M.g.getAttribute('col');
+  for (let t = 0; t < M.nF; t++) {
+    const c = mixed[colors[M.panel[t]]];
+    for (let k = 0; k < 3; k++) col.setXYZ(3*t + k, c.r, c.g, c.b);
+  }
+  col.needsUpdate = true;
+  const sw = document.getElementById('sw');
+  sw.innerHTML = '';
+  paints.forEach((p, i) => {
+    const li = document.createElement('li');
+    const hex = '#' + mixed[i].clone().convertLinearToSRGB().getHexString();
+    li.innerHTML = `<button id="paint-${i}" aria-pressed="${p.on}"><i style="background:${hex}"></i><span>${p.name}</span><b>${p.on ? lastCount[i] : '—'}</b></button>`;
+    li.firstChild.onclick = () => { p.on = !p.on; paint(); };
+    sw.appendChild(li);
+  });
+}
+document.getElementById('wh').addEventListener('input', e => {
+  document.getElementById('whv').textContent = e.target.value + ' %';
+  recolor();
+});
+
+function show(name, refit) {
+  cur = name;
+  if (mesh) scene.remove(mesh);
+  const M = models[name];
+  mesh = new THREE.Mesh(M.g, material);
+  scene.add(mesh);
+  paint();
+  if (refit) {
+    const r = M.size.length() * 0.5;
+    controls.target.set(0, M.size.y * 0.5, 0);
+    camera.position.set(r * 2.3, M.size.y * 0.75, r * 2.6);
+    camera.near = r * 0.05; camera.far = r * 30; camera.updateProjectionMatrix();
+    controls.minDistance = r * 0.6; controls.maxDistance = r * 8;
+  }
+  document.getElementById('m-v1').setAttribute('aria-pressed', name === 'v1');
+  document.getElementById('m-v2').setAttribute('aria-pressed', name === 'v2');
+  updateStats();
+}
+
+function updateStats() {
+  const M = models[cur], w = +document.getElementById('w').value;
+  const fmt = (x, d = 1) => x.toFixed(d).replace('.', ',');
+  const rows = [
+    ['Цветных граней', M.nPanels],
+    ['Чёрных рёбер', M.nCrease],
+    ['Длина всех рёбер', fmt(M.inkLen / 100, 1) + ' м'],
+    ['Площадь чёрного', w > 0 ? '≈ ' + fmt(M.inkLen * w / 10 / 100, 0) + ' см²' : '—'],
+    ['Высота по рогам', fmt(M.size.y, 0) + ' см'],
+  ];
+  document.getElementById('stats').innerHTML = rows.map(([a, b]) => `<dt>${a}</dt><dd>${b}</dd>`).join('');
+}
+
+const wIn = document.getElementById('w');
+function setW() {
+  const w = +wIn.value;
+  material.uniforms.halfW.value = w / 10 / 2; // мм → см, половина на каждую грань
+  document.getElementById('wv').textContent = String(w).replace('.', ',') + ' мм';
+  updateStats();
+}
+wIn.addEventListener('input', setW);
+document.getElementById('m-v1').onclick = () => show('v1', true);
+document.getElementById('m-v2').onclick = () => show('v2', true);
+document.getElementById('shuffle').onclick = paint;
+function setPal(p) {
+  palette = p;
+  document.getElementById('p-bright').setAttribute('aria-pressed', p === 'bright');
+  document.getElementById('p-soft').setAttribute('aria-pressed', p === 'soft');
+  document.getElementById('p-red').setAttribute('aria-pressed', p === 'red');
+  applyPreset();
+  paint();
+}
+document.getElementById('p-bright').onclick = () => setPal('bright');
+document.getElementById('p-soft').onclick = () => setPal('soft');
+document.getElementById('p-red').onclick = () => setPal('red');
+
+const spin = document.getElementById('spin');
+if (matchMedia('(prefers-reduced-motion: reduce)').matches) spin.checked = false;
+controls.autoRotateSpeed = 0.8;
+
+function resize() {
+  const w = stage.clientWidth, h = stage.clientHeight;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / Math.max(h, 1); camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(stage);
+
+show('v2', true); setW(); resize();
+(function loop() {
+  controls.autoRotate = spin.checked;
+  controls.update();
+  renderer.render(scene, camera);
+  requestAnimationFrame(loop);
+})();
+</script>
+
+</body>
+</html>

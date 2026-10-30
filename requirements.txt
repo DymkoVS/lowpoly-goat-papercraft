@@ -7,5 +7,7 @@ pymeshlab==2025.7.post1
 reportlab==5.0.1
 matplotlib==3.11.2
 pillow==13.0.0
+# для goat/paint.py (экспорт USDZ)
+usd-core==26.11
 # только для превью страниц PDF в PNG (необязательно)
 pymupdf==1.28.2

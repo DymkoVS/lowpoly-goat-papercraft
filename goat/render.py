@@ -25,11 +25,13 @@ def view_matrix(elev, azim):
     return np.stack([right, up2, d])
 
 
-def rasterize(mesh, elev, azim, size=700, colors=None, pad=0.05, headlight=False, tight=False):
+def rasterize(mesh, elev, azim, size=700, colors=None, pad=0.05, headlight=False, tight=False,
+              edges=True, bg=(1.0, 1.0, 1.0)):
     """Возвращает картинку и (px, py, s, c) — экранные координаты вершин, масштаб и центр.
 
     size — число или (ширина, высота); tight — кадрировать по проекции модели.
     headlight — свет от камеры (все видимые грани светлые).
+    edges — затемнять границы граней (для раскрашенной модели рёбра уже есть в геометрии).
     """
     R = view_matrix(elev, azim)
     v = mesh.vertices @ R.T
@@ -78,13 +80,14 @@ def rasterize(mesh, elev, azim, size=700, colors=None, pad=0.05, headlight=False
         k = 0.38 + 0.62 * np.clip(n @ light, 0, 1)
     base = np.ones((len(mesh.faces), 3)) * 0.95 if colors is None else np.asarray(colors)[:, :3]
     fc = np.clip(base * k[:, None], 0, 1)
-    img = np.ones((H, W, 3))
+    img = np.ones((H, W, 3)) * np.asarray(bg)
     m = fid >= 0
     img[m] = fc[fid[m]]
-    edge = np.zeros_like(m)
-    edge[:, 1:] |= fid[:, 1:] != fid[:, :-1]
-    edge[1:, :] |= fid[1:, :] != fid[:-1, :]
-    img[edge] = img[edge] * 0.35
+    if edges:
+        edge = np.zeros_like(m)
+        edge[:, 1:] |= fid[:, 1:] != fid[:, :-1]
+        edge[1:, :] |= fid[1:, :] != fid[:-1, :]
+        img[edge] = img[edge] * 0.35
     return img, (px, py, s, c)
 
 

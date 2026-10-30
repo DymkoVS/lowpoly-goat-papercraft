@@ -18,6 +18,7 @@
 import argparse
 import json
 import os
+import random
 import shutil
 import subprocess
 import sys
@@ -30,6 +31,18 @@ from PIL import Image
 sys.path.insert(0, os.path.dirname(__file__))
 
 import render  # noqa: E402
+
+DECOLA = [
+    ('Белила титановые', '#efede6'), ('Лимонная', '#e8d24f'), ('Жёлтая средняя', '#e2b23f'),
+    ('Охра золотистая', '#c39545'), ('Оранжевая', '#d9773a'), ('Красная светлая', '#cc4a3c'),
+    ('Красная', '#b3342f'), ('Кармин', '#8a2934'), ('Малиновая', '#a3354f'), ('Розовая', '#de9aa0'),
+    ('Сиреневая', '#a08cb2'), ('Фиолетовая', '#5d4578'), ('Ультрамарин', '#33438a'), ('Синяя', '#335f98'),
+    ('Голубая', '#86b3d2'), ('Бирюзовая', '#409a98'), ('Изумрудная', '#24775b'), ('Зелёная светлая', '#8db44f'),
+    ('Зелёная тёмная', '#335a3c'), ('Оливковая', '#7b783d'), ('Сиена жжёная', '#97492e'),
+    ('Умбра жжёная', '#5d3c2c'), ('Серая', '#8b8d88'),
+]
+REDS = ['Охра золотистая', 'Оранжевая', 'Красная светлая', 'Красная', 'Кармин',
+        'Малиновая', 'Розовая', 'Сиена жжёная', 'Умбра жжёная']
 
 DECOLA_RED = "#b3342f"     # акрил Decola «Красная», оттенок примерный
 TITAN_WHITE = "#efede6"    # Decola «Белила титановые»
@@ -62,23 +75,107 @@ def tint(hex_color, white):
     return lin_to_srgb(1 + K - np.sqrt(K * K + 2 * K))
 
 
-def bake(mesh, half_w):
+def panels(mesh):
+    """Общие плоские рёбра объединяют треугольники в панели."""
+    parent = list(range(len(mesh.faces)))
+
+    def find(i):
+        while parent[i] != i:
+            parent[i] = parent[parent[i]]
+            i = parent[i]
+        return i
+
+    flat = set()
+    for (a, b), edge in zip(mesh.face_adjacency, mesh.face_adjacency_edges):
+        if abs(mesh.face_normals[a] @ mesh.face_normals[b]) > 0.99995:
+            flat.add(tuple(sorted(edge)))
+            parent[find(int(a))] = find(int(b))
+    ids = {}
+    panel = []
+    for i in range(len(parent)):
+        root = find(i)
+        panel.append(ids.setdefault(root, len(ids)))
+    adj = [set() for _ in ids]
+    for a, b in mesh.face_adjacency:
+        a, b = panel[a], panel[b]
+        if a != b:
+            adj[a].add(b)
+            adj[b].add(a)
+    return np.array(panel), adj, flat
+
+
+def color_panels(adj, n_colors, seed):
+    """Балансируем число панелей, затем уменьшаем конфликты обменом цветов."""
+    rng = random.Random(seed)
+    n = len(adj)
+    best, best_bad = None, float("inf")
+    for attempt in range(2 if n_colors < 4 else 40):
+        # Квоты отличаются не больше чем на одну панель, в том числе при двух красках.
+        colors = [i % n_colors for i in range(n)]
+        rng.shuffle(colors)
+        edges = [(a, b) for a in range(n) for b in sorted(adj[a]) if a < b]
+        bad = sum(colors[a] == colors[b] for a, b in edges)
+        for step in range(20):
+            changed = False
+            order = list(range(n))
+            rng.shuffle(order)
+            for a in order:
+                if not any(colors[a] == colors[b] for b in adj[a]):
+                    continue
+                candidates = list(range(n))
+                rng.shuffle(candidates)
+                for b in candidates:
+                    ca, cb = colors[a], colors[b]
+                    if ca == cb:
+                        continue
+                    affected = {(min(v, w), max(v, w)) for v in (a, b) for w in adj[v]}
+                    before = sum(colors[v] == colors[w] for v, w in affected)
+                    colors[a], colors[b] = cb, ca
+                    after = sum(colors[v] == colors[w] for v, w in affected)
+                    if after < before:
+                        bad += after - before
+                        changed = True
+                        break
+                    colors[a], colors[b] = ca, cb
+            if not bad or not changed:
+                break
+        if bad < best_bad:
+            best, best_bad = colors[:], bad
+        if not bad or n_colors == 1:
+            break
+    return np.array(best), best_bad
+
+
+def paint_pool(args):
+    """Пользовательский список имеет приоритет над готовой палитрой."""
+    if args.paints is not None:
+        names = list(dict.fromkeys(x.strip() for x in args.paints.split(",") if x.strip()))
+        known = dict(DECOLA)
+        if not names or any(name not in known for name in names):
+            raise ValueError("Неизвестная или пустая краска. Допустимые: " + ", ".join(known))
+        return [(name, known[name]) for name in names]
+    if args.palette == "decola":
+        return [(name, color) for name, color in DECOLA if name not in ("Белила титановые", "Серая")]
+    if args.palette == "reds":
+        return [(name, dict(DECOLA)[name]) for name in REDS]
+    return [("Красная" if args.color == DECOLA_RED else args.color, args.color)]
+
+
+def bake(mesh, half_w, flat=None):
     """Делит треугольники на цветную середину и чёрную кайму.
 
     Плоские рёбра (раздел больших треугольников в v2) не красятся.
-    Возвращает (vertices, faces цветные, faces чёрные, длина чёрных рёбер, число вырожденных граней).
+    Возвращает вершины, цветные и чёрные грани, длину рёбер,
+    число вырожденных граней и исходный треугольник каждой цветной грани.
     """
     V, F = mesh.vertices, mesh.faces
-    n = mesh.face_normals
-    flat = set()
-    ink = 0.0
-    for (f0, f1), e in zip(mesh.face_adjacency, mesh.face_adjacency_edges):
-        if abs(n[f0] @ n[f1]) > 0.99995:
-            flat.add(tuple(sorted(e)))
-        else:
-            ink += np.linalg.norm(V[e[0]] - V[e[1]])
+    if flat is None:
+        _, _, flat = panels(mesh)
+    ink = sum(np.linalg.norm(V[e[0]] - V[e[1]]) for e in mesh.face_adjacency_edges
+              if tuple(sorted(e)) not in flat)
     out_v, col_f, blk_f, degenerate = [], [], [], 0
-    for tri in F:
+    col_source = []
+    for face_id, tri in enumerate(F):
         P = V[tri]
         # h[k] — высота на ребро напротив вершины k; d[k] — отступ от этого ребра
         h, d = np.zeros(3), np.zeros(3)
@@ -103,13 +200,16 @@ def bake(mesh, half_w):
         out_v.extend(P)
         out_v.extend(inner)
         col_f.append([base + 3, base + 4, base + 5])
+        col_source.append(face_id)
         for k in range(3):                 # кайма вдоль ребра напротив вершины k
             if d[k] == 0:
                 continue
             i, j = (k + 1) % 3, (k + 2) % 3
             blk_f.append([base + i, base + j, base + 3 + j])
             blk_f.append([base + i, base + 3 + j, base + 3 + i])
-    return np.array(out_v), np.array(col_f), np.array(blk_f), ink, degenerate
+    return (np.array(out_v), np.array(col_f, dtype=int).reshape(-1, 3),
+            np.array(blk_f, dtype=int).reshape(-1, 3), ink, degenerate,
+            np.array(col_source, dtype=int))
 
 
 def to_y_up_m(v):
@@ -117,10 +217,10 @@ def to_y_up_m(v):
     return np.c_[v[:, 0], v[:, 2], -v[:, 1]] / 100.0
 
 
-def export_glb(path, V, col_f, blk_f, rgb):
+def export_glb(path, V, groups):
     Vy = to_y_up_m(V)
     scene = trimesh.Scene()
-    for name, faces, c in [("paint", col_f, rgb), ("edges", blk_f, EDGE_BLACK)]:
+    for name, faces, c in groups:
         m = trimesh.Trimesh(Vy, faces, process=False)
         m.remove_unreferenced_vertices()
         m.visual = trimesh.visual.TextureVisuals(material=trimesh.visual.material.PBRMaterial(
@@ -130,7 +230,7 @@ def export_glb(path, V, col_f, blk_f, rgb):
     scene.export(path)
 
 
-def export_usdz(path, V, col_f, blk_f, rgb):
+def export_usdz(path, V, groups):
     from pxr import Gf, Sdf, Usd, UsdGeom, UsdShade, UsdUtils, Vt
 
     tmp = tempfile.mkdtemp()
@@ -141,7 +241,7 @@ def export_usdz(path, V, col_f, blk_f, rgb):
     root = UsdGeom.Xform.Define(stage, "/Goat")
     stage.SetDefaultPrim(root.GetPrim())
     Vy = to_y_up_m(V)
-    for name, faces, c in [("paint", col_f, rgb), ("edges", blk_f, EDGE_BLACK)]:
+    for name, faces, c in groups:
         used = np.unique(faces)
         remap = np.full(len(Vy), -1)
         remap[used] = np.arange(len(used))
@@ -192,6 +292,9 @@ def main():
     ap.add_argument("--obj", default="out/v2/goat.obj", help="модель (см, Z вверх)")
     ap.add_argument("--out", default="out/v2/paint")
     ap.add_argument("--color", default=DECOLA_RED, help="краска граней, hex")
+    ap.add_argument("--palette", choices=("single", "decola", "reds"), default="single")
+    ap.add_argument("--paints", help="названия красок через запятую; приоритет над --palette")
+    ap.add_argument("--seed", type=int, default=0, help="seed воспроизводимой раскраски")
     ap.add_argument("--white", type=float, default=10, help="белил в краске, %%")
     ap.add_argument("--edge", type=float, default=2.5, help="ширина чёрного ребра, мм")
     ap.add_argument("--size", type=int, default=1080, help="сторона картинки и видео, px")
@@ -200,21 +303,35 @@ def main():
     ap.add_argument("--no-video", action="store_true")
     args = ap.parse_args()
 
+    try:
+        pool = paint_pool(args)
+    except ValueError as exc:
+        ap.error(str(exc))
     os.makedirs(args.out, exist_ok=True)
     mesh = trimesh.load(args.obj, process=False)
     mesh.merge_vertices()
-    V, col_f, blk_f, ink, bad = bake(mesh, args.edge / 10 / 2)
-    rgb = tint(args.color, args.white / 100)
-    hexc = "#" + "".join(f"{round(x * 255):02x}" for x in rgb)
-    print(f"краска {args.color} + {args.white:g} % белил = {hexc}; ребро {args.edge:g} мм; "
-          f"чёрных рёбер {ink / 100:.1f} м; граней целиком в чёрном: {bad}")
-
-    export_glb(os.path.join(args.out, "goat_painted.glb"), V, col_f, blk_f, rgb)
-    export_usdz(os.path.join(args.out, "goat_painted.usdz"), V, col_f, blk_f, rgb)
+    panel, adj, flat = panels(mesh)
+    assigned, conflicts = color_panels(adj, len(pool), args.seed)
+    V, col_f, blk_f, ink, bad, source = bake(mesh, args.edge / 10 / 2, flat)
+    rgb = np.array([tint(color, args.white / 100) for _, color in pool])
+    print(f"панелей {len(adj)}; ребро {args.edge:g} мм; чёрных рёбер {ink / 100:.1f} м; "
+          f"граней целиком в чёрном: {bad}")
+    print("Список покупок (количество панелей, не объём краски):")
+    for i, (name, _) in enumerate(pool):
+        hexc = "#" + "".join(f"{round(x * 255):02x}" for x in rgb[i])
+        print(f"  {name}: {np.count_nonzero(assigned == i)} панелей; с белилами {hexc}")
+    print(f"Соседних пар одного цвета: {conflicts}")
+    face_colors = assigned[panel[source]]
+    groups = [(f"paint_{i}", col_f[face_colors == i], color)
+              for i, color in enumerate(rgb) if np.any(face_colors == i)]
+    if len(blk_f):
+        groups.append(("edges", blk_f, EDGE_BLACK))
+    export_glb(os.path.join(args.out, "goat_painted.glb"), V, groups)
+    export_usdz(os.path.join(args.out, "goat_painted.usdz"), V, groups)
     export_html(os.path.join(args.out, "goat_3d.html"))
 
     faces = np.vstack([col_f, blk_f])
-    colors = np.vstack([np.tile(rgb, (len(col_f), 1)), np.tile(EDGE_BLACK, (len(blk_f), 1))])
+    colors = np.vstack([rgb[face_colors], np.tile(EDGE_BLACK, (len(blk_f), 1))])
     frame(V, faces, colors, 0, args.size).save(os.path.join(args.out, "goat_painted.png"))
     if args.no_video or not shutil.which("ffmpeg"):
         print("видео пропущено")

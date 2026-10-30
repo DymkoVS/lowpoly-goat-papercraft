@@ -103,6 +103,41 @@ python3 -m venv .venv
 
 Как устроен генератор — [docs/algorithm.ru.md](docs/algorithm.ru.md).
 
+## Раскраска и 3D-файлы
+
+`goat/paint.py` создаёт матовые GLB / USDZ, PNG и при необходимости MP4 с облётом.
+Нужны готовые модели в `out/`; можно взять опубликованные без пересборки:
+
+```bash
+mkdir -p out/v1 out/v2
+cp patterns/v1/goat.obj out/v1/goat.obj
+cp patterns/v2/goat.obj out/v2/goat.obj
+.venv/bin/python goat/paint.py --no-video  # как раньше: красная + 10 % белил
+.venv/bin/python goat/paint.py --palette decola --seed 1 --no-video --out out/v2/paint_decola
+.venv/bin/python goat/paint.py --palette reds --white 20 --seed 1 --out out/v2/paint_reds
+.venv/bin/python goat/paint.py --paints "Красная,Кармин,Охра золотистая" --seed 1 --no-video --out out/v2/paint_custom
+```
+
+`single` (по умолчанию) использует `--color`; `decola` — палитру просмотрщика
+из 23 красок без титановых белил и серой; `reds` — девять его тёплых красок.
+`--paints` имеет приоритет над палитрой: названия как в `goat/viewer.html`.
+Неизвестное название вызывает ошибку со списком допустимых.
+`--white` действует на все краски; `--color` — только в режиме `single`
+без явно заданного `--paints`.
+
+Плоские соседние треугольники объединяются в одну панель. При одинаковом seed
+раскраска воспроизводится; число панелей на краску сбалансировано (это не расход
+в миллилитрах). Алгоритм старается исключить одинаковых соседей; при малом числе
+красок они могут остаться. Консоль выводит их количество и список покупок.
+На каждую использованную краску — один материал, плюс чёрные рёбра;
+roughness 1, metallic 0. USDZ использует UsdPreviewSurface, метры и ось Y вверх;
+работу Quick Look / AR проверяйте на устройстве.
+HTML-просмотрщик по-прежнему перемешивает цвета самостоятельно, не воспроизводя
+seed экспортированных файлов. Результаты в `out/` не коммитятся.
+
+Тесты, включая совпадение палитр Python и HTML:
+`.venv/bin/python -m unittest discover -s tests -v`.
+
 ## Лицензия
 
 - **Выкройки** (PDF, картинки, 3D-модель в `patterns/`, фото в `docs/img/`) — [CC BY 4.0](LICENSE-PATTERN.txt). Можно использовать, распространять и переделывать, в том числе коммерчески (мастер-классы, занятия, наборы). Обязательно указывайте «Low-poly Goat Papercraft by DymkoVS» со ссылкой на этот репозиторий.

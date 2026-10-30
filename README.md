@@ -98,6 +98,38 @@ Tested with Python 3.12 on macOS. Windows and Linux should work (pure Python dep
 
 Details (in Russian): [docs/algorithm.ru.md](docs/algorithm.ru.md).
 
+## Painting and 3D exports
+
+`goat/paint.py` exports matte GLB / USDZ models, a PNG and an optional MP4 orbit.
+Use an existing build in `out/`, or copy the published models there first:
+
+```bash
+mkdir -p out/v1 out/v2
+cp patterns/v1/goat.obj out/v1/goat.obj
+cp patterns/v2/goat.obj out/v2/goat.obj
+.venv/bin/python goat/paint.py --no-video  # unchanged red + 10% white
+.venv/bin/python goat/paint.py --palette decola --seed 1 --no-video --out out/v2/paint_decola
+.venv/bin/python goat/paint.py --palette reds --white 20 --seed 1 --out out/v2/paint_reds
+.venv/bin/python goat/paint.py --paints "Красная,Кармин,Охра золотистая" --seed 1 --no-video --out out/v2/paint_custom
+```
+
+`single` (default) uses `--color`; `decola` uses the viewer's 23-paint list except
+Titanium White and Grey; `reds` uses its nine warm paints. `--paints` overrides
+the preset and accepts the Russian names shown in `goat/viewer.html`. Unknown
+names are rejected with a list of valid names. `--white` applies to every paint;
+`--color` affects only `single` without an explicit `--paints` list.
+
+Coplanar triangles form one panel. Seeded colouring balances panel counts (not
+paint volume) and tries to avoid matching neighbours. With too few paints,
+conflicts can remain; the console reports them and prints a shopping list.
+Each used paint has one material, plus black edges (roughness 1, metallic 0).
+USDZ uses UsdPreviewSurface, metres and Y-up; check Quick Look / AR on your device.
+The interactive HTML viewer keeps its own independently shuffled colouring;
+it does not reproduce the exported seed. Outputs stay under ignored `out/`.
+
+Tests (including Python / HTML palette consistency):
+`.venv/bin/python -m unittest discover -s tests -v`.
+
 ## Licence
 
 - **Patterns** (PDF, pictures, 3D model in `patterns/`, photos in `docs/img/`): [CC BY 4.0](LICENSE-PATTERN.txt). Use, share, adapt — also commercially (workshops, classes, kits) — as long as you credit "Low-poly Goat Papercraft by DymkoVS" with a link to this repository.
